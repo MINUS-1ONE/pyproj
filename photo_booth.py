@@ -18,6 +18,6 @@ print("[INFO] warming up camera...")
 vs = VideoStream(usePiCamera=args["picamera"] > 0).start()
 time.sleep(2.0)
  
-# 开启PhotoBoothApp
+# 开启PhotoBoothApp 窗口循环
 pba = photoboothapp.PhotoBoothApp(vs, args["output"])
 pba.mainloop()
