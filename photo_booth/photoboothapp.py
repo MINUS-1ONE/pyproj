@@ -137,6 +137,27 @@ class PhotoBoothApp(tki.Frame):
 		self.EndPlayBtn.pack()
 
 		self.fm4.pack(side="left")
+		
+		# Frame5放置图像标注模块
+		self.fm5 = tki.Frame(self)
+		
+		# 放置可选框标题
+		self.fm5_top = tki.Frame(self.fm5)
+		self.BoxLabel = tki.Label(self.fm5_top, text="Box Labels",width=20,bg="white")
+		self.BoxLabel.pack(side="top")
+		self.fm5_top.pack(side="top",pady=10,padx=20)
+		
+		# 放置可选项
+		self.fm5_middle1 = tki.Frame(self.fm5)
+		self.status_human = tki.IntVar()
+		self.humanCb = tki.Checkbutton(self.fm5_middle1, variable=self.status_human, command=self.rtaend)
+		self.humanLabel = tki.Label(self.fm5_middle1, text="Human", bg="white")
+		self.humanLabel.pack(side="right")
+		self.humanCb.pack(side="right")
+		self.fm5_middle1.pack(side="top")
+		
+		self.fm5.pack(side="right")
+		
 	
 	'''
 	videoLoop函数逻辑：停止读取摄像头事件管理标志self.stopEvent若未设置为True
@@ -344,29 +365,36 @@ class PhotoBoothApp(tki.Frame):
 		self.starty = event.y
 	
 	def rtaend(self,event):
-		# 读取鼠标释放点
-		self.endx = event.x
-		self.endy = event.y
-		# 从Image格式转化为OpenCV格式
-		img_rect = cv2.cvtColor(np.asarray(self._PILImage[self.listpos]),
-			cv2.COLOR_RGB2BGR)
-		# 进行画矩形框操作
-		print("[INFO] Start drawing frame")
-		cv2.rectangle(img=img_rect,pt1=(self.startx,self.starty),
-			pt2=(self.endx,self.endy),color=(0,255,0),thickness=1)
-		# 从OpenCV格式转化为Image格式
-		self.imagelist[self.listpos] = Image.fromarray(cv2.cvtColor(img_rect,cv2.COLOR_BGR2RGB))
-		# 重新化为ImageTk格式
-		self.imagelist[self.listpos] = ImageTk.PhotoImage(self.imagelist[self.listpos])
-		self.FrameLabel.configure(image=self.imagelist[self.listpos])
-		self.FrameLabel.image = self.imagelist[self.listpos]
-		print("[INFO] finish drawing frame")
-		print("[INFO] Write the information for the frame")
-		with open("Frame_infor.txt",'a') as f_msg:
-			f_msg.write("左上角：{0}  右下角：{1}  长：{2}  宽：{3}  位于{4}文件的第{5}帧\n".format
-				((self.startx,self.starty),(self.endx,self.endy),self.endx-self.startx,
-				self.endy-self.starty,self.VideoFromEntry.get(),self.listpos))
-		
-		
-		
-		
+		if self.status_human.get() == 1:
+			# 读取鼠标释放点
+			self.endx = event.x
+			self.endy = event.y
+			# 从Image格式转化为OpenCV格式
+			img_rect = cv2.cvtColor(np.asarray(self._PILImage[self.listpos]),
+				cv2.COLOR_RGB2BGR)
+			# 进行画矩形框操作
+			print("[INFO] Start drawing frame")
+			cv2.rectangle(img=img_rect,pt1=(self.startx,self.starty),
+				pt2=(self.endx,self.endy),color=(0,255,0),thickness=1)
+			# 从OpenCV格式转化为Image格式
+			# 画框操作保留副本 即可保留多个框
+			self._PILImage[self.listpos] = Image.fromarray(cv2.cvtColor(img_rect,cv2.COLOR_BGR2RGB))
+			self.imagelist[self.listpos] = Image.fromarray(cv2.cvtColor(img_rect,cv2.COLOR_BGR2RGB))
+			# 重新化为ImageTk格式
+			self.imagelist[self.listpos] = ImageTk.PhotoImage(self.imagelist[self.listpos])
+			self.FrameLabel.configure(image=self.imagelist[self.listpos])
+			self.FrameLabel.image = self.imagelist[self.listpos]
+			print("[INFO] finish drawing frame")
+			print("[INFO] Write the information for the frame")
+			with open("Frame_infor.txt",'a') as f_msg:
+				f_msg.write("左上角：{0}  右下角：{1}  长：{2}  宽：{3}  位于{4}文件的第{5}帧\n".format(
+					(self.startx,self.starty),
+					(self.endx,self.endy),
+					self.endx-self.startx,
+					self.endy-self.starty,
+					self.VideoFromEntry.get(),
+					self.listpos)
+					)
+		else:
+			msgbox.showwarning(title="[WARNING]",message="CATEGORY NOT SELECTED!")
+			
