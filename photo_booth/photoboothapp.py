@@ -45,14 +45,12 @@ class PhotoBoothApp(tki.Frame):
 		self.imagelist = None
 		self._PILImage = None
 		self.listpos = 0
+		self.switch_rta = False
 		self.startx = 0
 		self.starty = 0
 		self.endx = 0
 		self.endy = 0
 		
-		# 开启另一个线程读取摄像头数据并展现最近读取画面
-		# self.thread = threading.Thread(target=self.videoLoop, args=())
-		# self.thread.start()
 		self.stopEvent = threading.Event()# 创建一个事件管理标志表明用于结束进程 默认为False
 		
 		# 无需开启另一个线程 直接执行轮询函数
@@ -148,14 +146,23 @@ class PhotoBoothApp(tki.Frame):
 		self.fm5_top.pack(side="top",pady=10,padx=20)
 		
 		# 放置可选项
-		self.fm5_middle1 = tki.Frame(self.fm5)
-		self.status_human = tki.IntVar()
-		self.humanCb = tki.Checkbutton(self.fm5_middle1, variable=self.status_human, command=self.rtaend)
-		self.humanLabel = tki.Label(self.fm5_middle1, text="Human", bg="white")
-		self.humanLabel.pack(side="right")
-		self.humanCb.pack(side="right")
-		self.fm5_middle1.pack(side="top")
+		self.status = tki.StringVar()
+		self.status.set("None")
+		self.fm5_middle = tki.Frame(self.fm5)
+		self.fm5_middle.pack(side="top")
 		
+		self.fm5_middle.human = tki.Radiobutton(
+			self.fm5_middle, text="Human",
+			variable=self.status, value="Human",
+			command=self.rtaswitch,justify='left',width=10)
+		self.fm5_middle.human.pack(side="top")
+		
+		self.fm5_middle.ball = tki.Radiobutton(
+			self.fm5_middle, text="Ball",
+			variable=self.status, value="Ball",
+			command=self.rtaswitch,justify='left',width=10)
+		self.fm5_middle.ball.pack(side="top")	
+
 		self.fm5.pack(side="right")
 		
 	
@@ -276,6 +283,7 @@ class PhotoBoothApp(tki.Frame):
 		if self.FrameLabel == None:
 			self.FrameLabel = tki.Label(self.fm4,image=self.imagelist[0])
 			self.FrameLabel.image = self.imagelist[0]
+			# 当展示面板出现时检测鼠标按下 获得画框的起落点
 			self.FrameLabel.bind("<Button-1>",self.rtastart)
 			self.FrameLabel.bind("<ButtonRelease-1>",self.rtaend)
 			self.FrameLabel.pack(side="left")
@@ -358,14 +366,22 @@ class PhotoBoothApp(tki.Frame):
 		# 开启摄像头和时视频流
 		print("[INFO] Turn On The Camera...")
 		self.stopEvent.clear()
-
+		
+	def rtaswitch(self):
+		# 画框操作的开关 检测单选按钮的variable文本内容（self.status.get()）
+		# 如果单选按钮被按下 则variable文本内容（self.status.get()）变为单选按钮的value 开关打开
+		if self.status.get() != "None":
+			self.switch_rta = True
+		else:
+			self.switch_rta = False
+	
 	def rtastart(self,event):
 		# 读取鼠标落点
 		self.startx = event.x
 		self.starty = event.y
 	
 	def rtaend(self,event):
-		if self.status_human.get() == 1:
+		if self.switch_rta == True:
 			# 读取鼠标释放点
 			self.endx = event.x
 			self.endy = event.y
@@ -387,11 +403,12 @@ class PhotoBoothApp(tki.Frame):
 			print("[INFO] finish drawing frame")
 			print("[INFO] Write the information for the frame")
 			with open("Frame_infor.txt",'a') as f_msg:
-				f_msg.write("左上角：{0}  右下角：{1}  长：{2}  宽：{3}  位于{4}文件的第{5}帧\n".format(
+				f_msg.write("左上角：{0}  右下角：{1}  长：{2}  宽：{3} 标注出{4} 位于{5}文件的第{6}帧\n".format(
 					(self.startx,self.starty),
 					(self.endx,self.endy),
 					self.endx-self.startx,
 					self.endy-self.starty,
+					self.status.get(),
 					self.VideoFromEntry.get(),
 					self.listpos)
 					)
