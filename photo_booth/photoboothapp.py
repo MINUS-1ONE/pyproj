@@ -87,7 +87,7 @@ class PhotoBoothApp(tki.Frame):
 		self.VideoPathEntry.pack(side="left")
 		self.fm2_bottom.pack(side="bottom",padx = 2)
 		
-		self.fm2.pack(side="bottom",padx = 2,expand="yes",fill="x")
+		self.fm2.pack(side="bottom",padx = 2)
 		
 		# Frame3放置视频实时显示面板和开关摄像头按钮
 		self.fm3 = tki.Frame(self)
@@ -146,22 +146,30 @@ class PhotoBoothApp(tki.Frame):
 		self.fm5_top.pack(side="top",pady=10,padx=20)
 		
 		# 放置可选项
-		self.status = tki.StringVar()
-		self.status.set("None")
+		self.statuslist = tki.StringVar()
 		self.fm5_middle = tki.Frame(self.fm5)
 		self.fm5_middle.pack(side="top")
 		
-		self.fm5_middle.human = tki.Radiobutton(
-			self.fm5_middle, text="Human",
-			variable=self.status, value="Human",
-			command=self.rtaswitch,justify='left',width=10)
-		self.fm5_middle.human.pack(side="top")
+		slb = tki.Scrollbar(self.fm5_middle)
+		slb.pack(side="right", fill="y")
 		
-		self.fm5_middle.ball = tki.Radiobutton(
-			self.fm5_middle, text="Ball",
-			variable=self.status, value="Ball",
-			command=self.rtaswitch,justify='left',width=10)
-		self.fm5_middle.ball.pack(side="top")	
+		self.fm5_middle.statebox = tki.Listbox(
+			self.fm5_middle, 
+			listvariable=self.statuslist,
+			yscrollcommand=slb.set)
+		self.fm5_middle.statebox.insert(tki.END, "人类")
+		self.fm5_middle.statebox.insert(tki.END, "球类")
+		self.fm5_middle.statebox.bind("<Double-Button-1>", self.rtaswitch) # 使用双击关联事件 因为单击会捕捉选定的动作 导致选定动作被搁置
+		self.fm5_middle.statebox.pack(side="top")
+		
+		self.fm5_middle.addentry = tki.Entry(self.fm5_middle,width=8)
+		self.fm5_middle.addbtn = tki.Button(
+			self.fm5_middle,
+			text="Add Status",
+			command=self.addstatus
+			)
+		self.fm5_middle.addbtn.pack(side="right")
+		self.fm5_middle.addentry.pack(side="right")
 
 		self.fm5.pack(side="right")
 		
@@ -366,12 +374,21 @@ class PhotoBoothApp(tki.Frame):
 		# 开启摄像头和时视频流
 		print("[INFO] Turn On The Camera...")
 		self.stopEvent.clear()
+	
+	def addstatus(self):
+		if self.fm5_middle.addentry.get() != None:
+			self.fm5_middle.statebox.insert(tki.END, self.fm5_middle.addentry.get())
 		
-	def rtaswitch(self):
+		else:
+			msgbox.showwarning(title="[WARNING]",message="THE ENTRY IS NOT FILLED IN!")
+			
+	def rtaswitch(self,event):
 		# 画框操作的开关 检测单选按钮的variable文本内容（self.status.get()）
 		# 如果单选按钮被按下 则variable文本内容（self.status.get()）变为单选按钮的value 开关打开
-		if self.status.get() != "None":
+		if self.statuslist.get() != None:
 			self.switch_rta = True
+			self.status=self.fm5_middle.statebox.get(int(self.fm5_middle.statebox.curselection()[0]))
+			
 		else:
 			self.switch_rta = False
 	
@@ -403,12 +420,11 @@ class PhotoBoothApp(tki.Frame):
 			print("[INFO] finish drawing frame")
 			print("[INFO] Write the information for the frame")
 			with open("Frame_infor.txt",'a') as f_msg:
-				f_msg.write("左上角：{0}  右下角：{1}  长：{2}  宽：{3} 标注出{4} 位于{5}文件的第{6}帧\n".format(
+				f_msg.write("{0}，{1}，{2}，{3}，{4}第{5}帧\n".format(
+					self.status,
 					(self.startx,self.starty),
-					(self.endx,self.endy),
 					self.endx-self.startx,
 					self.endy-self.starty,
-					self.status.get(),
 					self.VideoFromEntry.get(),
 					self.listpos)
 					)
