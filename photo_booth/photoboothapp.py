@@ -383,8 +383,8 @@ class PhotoBoothApp(tki.Frame):
 			msgbox.showwarning(title="[WARNING]",message="THE ENTRY IS NOT FILLED IN!")
 			
 	def rtaswitch(self,event):
-		# 画框操作的开关 检测单选按钮的variable文本内容（self.status.get()）
-		# 如果单选按钮被按下 则variable文本内容（self.status.get()）变为单选按钮的value 开关打开
+		# 画框操作的开关 检测listbox变量的listvariable文本内容（self.statuslist.get()）
+		# 如果listbox被按下 则listvariable内容（self.statuslist.get()）增加了listbox的的value 开关打开
 		if self.statuslist.get() != None:
 			self.switch_rta = True
 			self.status=self.fm5_middle.statebox.get(int(self.fm5_middle.statebox.curselection()[0]))
